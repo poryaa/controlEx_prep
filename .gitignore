@@ -1,0 +1,4 @@
+.venv_ce
+Tensorboard_logs
+__pycache__
+custom_model.keras
