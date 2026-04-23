@@ -1,47 +1,110 @@
+from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import History
 
-def plot_training_history(history):
-    """Returns separate loss curves for training and validation metrics.""" 
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
 
-    accuracy = history.history['accuracy']
-    val_accuracy = history.history['val_accuracy']
-
-    epochs = range(len(history.history['loss']))
-
-    # Plot loss
-    plt.plot(epochs, loss, label='training_loss')
-    plt.plot(epochs, val_loss, label='val_loss')
-    plt.title('Loss')
-    plt.xlabel('Epochs')
-    plt.legend()
-
-    # Plot accuracy
-    plt.figure()
-    plt.plot(epochs, accuracy, label='training_accuracy')
-    plt.plot(epochs, val_accuracy, label='val_accuracy')
-    plt.title('Accuracy')
-    plt.xlabel('Epochs')
-    plt.legend()
-
-# Create a function to import an image and resize it to be able to be used with our model
-def load_and_prep_image(filename, img_shape=224):
+def plot_training_history(history: History) -> None:
     """
-    Reads an image from filename, turns it into a tensor
-    and reshapes it to (img_shape, img_shape, colour_channel).
+    Plot training and validation loss/accuracy curves from a Keras History object.
+
+    Parameters
+    ----------
+    history : History
+        History object returned by `model.fit()`.
+
+    Raises
+    ------
+    ValueError
+        If required metrics are not found in `history.history`.
     """
-    # Read in target file (an image)
+    history_dict = history.history
+
+    loss = history_dict.get("loss")
+    val_loss = history_dict.get("val_loss")
+    accuracy = history_dict.get("accuracy")
+    val_accuracy = history_dict.get("val_accuracy")
+
+    if loss is None or val_loss is None:
+        raise ValueError("Expected 'loss' and 'val_loss' in history.history.")
+
+    if accuracy is None or val_accuracy is None:
+        raise ValueError("Expected 'accuracy' and 'val_accuracy' in history.history.")
+
+    epochs = range(1, len(loss) + 1)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+    axes[0].plot(epochs, loss, label="train_loss")
+    axes[0].plot(epochs, val_loss, label="val_loss")
+    axes[0].set_title("Loss")
+    axes[0].set_xlabel("Epoch")
+    axes[0].set_ylabel("Loss")
+    axes[0].legend()
+
+    axes[1].plot(epochs, accuracy, label="train_accuracy")
+    axes[1].plot(epochs, val_accuracy, label="val_accuracy")
+    axes[1].set_title("Accuracy")
+    axes[1].set_xlabel("Epoch")
+    axes[1].set_ylabel("Accuracy")
+    axes[1].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def load_and_prep_image(filename: str, img_size: int = 224) -> tf.Tensor:
+    """
+    Load an image file, decode it as RGB, resize it, and scale pixel values to [0, 1].
+
+    Parameters
+    ----------
+    filename : str
+        Path to the image file.
+    img_size : int, optional
+        Target height and width for resizing, by default 224.
+
+    Returns
+    -------
+    tf.Tensor
+        Preprocessed image tensor of shape `(img_size, img_size, 3)`.
+    """
     img = tf.io.read_file(filename)
-
-    # Decode the read file into a tensor & ensure 3 colour channels 
-    # (our model is trained on images with 3 colour channels and sometimes images have 4 colour channels)
-    img = tf.image.decode_image(img, channels=3)
-
-    # Resize the image (to the same size our model was trained on)
-    img = tf.image.resize(img, size = [img_shape, img_shape])
-
-    # Rescale the image (get all values between 0 and 1)
-    img = img/255.
+    img = tf.image.decode_image(img, channels=3, expand_animations=False)
+    img = tf.image.resize(img, [img_size, img_size])
+    img = tf.cast(img, tf.float32) / 255.0
     return img
+
+
+def create_tensorboard_callback(
+    log_dir_root: str,
+    experiment_name: str,
+) -> TensorBoard:
+    """
+    Create a TensorBoard callback with a timestamped log directory.
+
+    Parameters
+    ----------
+    log_dir_root : str
+        Root directory for TensorBoard logs.
+    experiment_name : str
+        Name of the experiment.
+
+    Returns
+    -------
+    TensorBoard
+        Configured TensorBoard callback.
+    """
+    log_dir = Path(log_dir_root) / experiment_name / datetime.now().strftime("%Y%m%d-%H%M%S")
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    callback = TensorBoard(log_dir=str(log_dir))
+
+    print(f"Saving TensorBoard log files to: {log_dir}")
+    return callback
