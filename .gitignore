@@ -25,3 +25,9 @@ tests/custom_food_images
 tests/06_101_food_class_10_percent_saved_big_dog_model
 tests/drive
 tests/confusion_matrix.png
+tests/Projects/Project01: Large Movie Review Dataset/aclImdb_v1.tar.gz
+tests/Projects/Project01: Large Movie Review Dataset/aclImdb
+tests/__MACOSX
+tests/Projects/Project02: VehiDE/yolo11n-seg.pt
+tests/Projects/Project02: VehiDE/yolo_dataset
+tests/Projects/Project02: VehiDE/VehiDe_dataset
