@@ -31,3 +31,23 @@ tests/__MACOSX
 tests/Projects/Project02: VehiDE/yolo11n-seg.pt
 tests/Projects/Project02: VehiDE/yolo_dataset
 tests/Projects/Project02: VehiDE/VehiDe_dataset
+tests/Projects/Project02: VehiDE/maskrcnn_dataset
+tests/Projects/Project03:Peltarion/dataset
+tests/Projects/Project03:Peltarion/kaggle_dataset
+tests/Projects/Project03_Peltarion/yolo11n-cls.pt
+tests/Projects/Project03_Peltarion/yolo11s-cls.pt
+tests/Projects/Project03_Peltarion/yolo26n.pt
+tests/Projects/Project03_Peltarion/model_5.pt
+tests/Projects/Project03_Peltarion/model_4.keras
+tests/Projects/Project03_Peltarion/model_3.keras
+tests/Projects/Project03_Peltarion/model_2.keras
+tests/Projects/Project03_Peltarion/model_1.keras
+tests/Projects/Project03_Peltarion/runs
+tests/Projects/Project03_Peltarion/kaggle_dataset
+tests/Projects/Project03_Peltarion/dataset
+tests/Projects/Project03_Peltarion/mlruns
+tests/Projects/Project04_Colab/datasets
+tests/Projects/Project04_Colab/original_dataset
+tests/Projects/Project04_Colab/saved_histories
+tests/Projects/Project04_Colab/saved_models
+tests/Projects/Project04_Colab/test_images
