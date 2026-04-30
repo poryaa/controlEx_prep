@@ -11,10 +11,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-
+# =========================================================================
 # --------------------------------------------------------------------
 # 1. Download Kaggle dataset once into a stable folder
 # --------------------------------------------------------------------
+
 
 def download_original_dataset(
     dataset_name: str = "prajwalbhamere/car-damage-severity-dataset",
@@ -61,7 +62,7 @@ def download_original_dataset(
 
     return target_path
 
-
+# =========================================================================
 # --------------------------------------------------------------------
 # 2. Walk a directory tree and print structure
 # --------------------------------------------------------------------
@@ -82,7 +83,7 @@ def walk_through_dir(dir_path):
         num_files = len(files)
         print(f"There are {num_dirs} directories and {num_files} images/files in '{root_path.relative_to(dir_path)}'.")
 
-
+# =========================================================================
 # --------------------------------------------------------------------
 # 3. Plot one random image per class (folder-based labels)
 # --------------------------------------------------------------------
@@ -164,7 +165,7 @@ def plot_one_random_image_per_class(
     plt.tight_layout()
     plt.show()
 
-
+# =========================================================================
 # --------------------------------------------------------------------
 # 4. Plot train/val label distributions (bar + pies)
 # --------------------------------------------------------------------
@@ -271,7 +272,7 @@ def plot_split_label_distributions(
     plt.tight_layout()
     plt.show()
 
-
+# =========================================================================
 # --------------------------------------------------------------------
 # 5. Brief dataset inspection: sizes, formats, pixel stats
 # --------------------------------------------------------------------
@@ -332,7 +333,7 @@ def inspect_image_dataset_brief(root_dir):
 
 
 
-
+# =========================================================================
 # --------------------------------------------------------------------
 # 6. plot confusion matrix
 # --------------------------------------------------------------------
@@ -432,8 +433,6 @@ def plot_confusion_matrix_for_model(
     plt.show()
 
     return cm_raw, y_true, y_pred
-
-
 
 # =========================================================================
 from pathlib import Path
@@ -595,3 +594,96 @@ def plot_confusion_matrix_for_model(
     plt.show()
 
     return cm_raw, y_true, y_pred
+
+# ============================================================================
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
+    accuracy_score,
+    precision_recall_fscore_support,
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay)
+
+def get_true_and_pred_labels(model, dataset):
+    y_true = []
+    y_prob = []
+
+    for batch_x, batch_y in dataset:
+        batch_pred = model.predict(batch_x, verbose=0)
+        y_prob.append(batch_pred)
+
+        if len(batch_y.shape) > 1 and batch_y.shape[-1] > 1:
+            y_true.append(np.argmax(batch_y.numpy(), axis=1))
+        else:
+            y_true.append(batch_y.numpy())
+
+    y_true = np.concatenate(y_true)
+    y_prob = np.concatenate(y_prob)
+    y_pred = np.argmax(y_prob, axis=1)
+
+    return y_true, y_pred, y_prob
+
+
+def evaluate_model_on_dataset(model, dataset, class_names, model_name="model"):
+    y_true, y_pred, y_prob = get_true_and_pred_labels(model, dataset)
+
+    acc = accuracy_score(y_true, y_pred)
+
+    precision_macro, recall_macro, f1_macro, _ = precision_recall_fscore_support(
+        y_true, y_pred, average="macro", zero_division=0
+    )
+
+    precision_per_class, recall_per_class, f1_per_class, support_per_class = precision_recall_fscore_support(
+        y_true, y_pred, average=None, zero_division=0
+    )
+
+    summary_df = pd.DataFrame([{
+        "model": model_name,
+        "accuracy": acc,
+        "precision_macro": precision_macro,
+        "recall_macro": recall_macro,
+        "f1_macro": f1_macro
+    }])
+
+    per_class_df = pd.DataFrame({
+        "class_name": class_names,
+        "precision": precision_per_class,
+        "recall": recall_per_class,
+        "f1": f1_per_class,
+        "support": support_per_class
+    })
+
+    cm = confusion_matrix(y_true, y_pred)
+
+    report_text = classification_report(
+        y_true,
+        y_pred,
+        target_names=class_names,
+        zero_division=0
+    )
+
+    return {
+        "summary_df": summary_df,
+        "per_class_df": per_class_df,
+        "confusion_matrix": cm,
+        "classification_report": report_text,
+        "y_true": y_true,
+        "y_pred": y_pred,
+        "y_prob": y_prob,
+    }
+
+
+def plot_confusion_matrix_from_preds(y_true, y_pred, class_names, title="Confusion Matrix", figsize=(6, 5), cmap="Blues"):
+    cm = confusion_matrix(y_true, y_pred)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+    disp.plot(ax=ax, cmap=cmap, colorbar=False)
+    ax.set_title(title)
+    plt.xticks(rotation=30, ha="right")
+    plt.tight_layout()
+    plt.show()
+
+    return cm
